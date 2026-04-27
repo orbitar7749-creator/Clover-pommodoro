@@ -88,10 +88,10 @@
       letter-spacing: 0.05em;
     }
 
-    /* ── Music Button (top-right corner) ── */
+    /* ── Music Button (bottom-right corner) ── */
     #music-btn {
       position: fixed;
-      top: 28px;
+      bottom: 28px;
       right: 28px;
       z-index: 10;
       width: 48px; height: 48px;
@@ -118,17 +118,17 @@
 
     /* ── Main Card ── */
     #main-card {
-      background: var(--glass);
-      backdrop-filter: blur(20px);
-      border: 1.5px solid var(--glass-border);
+      background: rgba(7, 21, 7, 0.22);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(77, 170, 77, 0.15);
       border-radius: var(--radius);
-      padding: 36px 44px 32px;
-      width: min(520px, 92vw);
+      padding: 48px 60px 40px;
+      width: min(640px, 94vw);
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 0;
-      box-shadow: 0 8px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(125,216,125,0.08);
+      box-shadow: 0 8px 48px rgba(0,0,0,0.2), inset 0 1px 0 rgba(125,216,125,0.05);
       position: relative;
     }
 
@@ -269,10 +269,9 @@
     .ctrl-btn.primary:hover { background: rgba(74,170,74,0.35); box-shadow: 0 0 18px rgba(74,170,74,0.3); }
     .ctrl-btn.hidden { display: none; }
 
-    /* ── Music Panel ── */
     #music-panel {
       position: fixed;
-      top: 80px;
+      bottom: 88px;
       right: 28px;
       z-index: 20;
       width: 300px;
