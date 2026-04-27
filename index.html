@@ -75,16 +75,17 @@
       z-index: 10;
     }
 #clock-time {
-  font-family: 'Lora', serif; /* Changed to Lora and serif fallback */
-  font-size: 7rem;
-  font-weight: 700; /* Lora's max weight is usually 700 */
+  font-family: 'Nunito', sans-serif; /* Changed to Lora and serif fallback */
+  font-size: 4rem;
+  font-weight: 800; /* Lora's max weight is usually 700 */
   color: var(--white);
   line-height: 1;
   text-shadow: 0 0 20px rgba(74, 170, 74, 0.5);
 }
 
     #clock-date {
-      font-size: 0.85rem;
+      font-family: 'Nunito', sans-serif; /* Changed to Lora and serif fallback */
+  font-size: 3rem;
       font-weight: 600;
       color: var(--green-light);
       margin-top: 4px;
@@ -195,6 +196,7 @@
     }
     #timer-display:hover { background: rgba(74,170,74,0.07); }
     .time-hm {
+      font-family: 'Lora', sans-serif;
       font-size: clamp(6.4rem, 18vw, 10rem);
       font-weight: 900;
       color: var(--white);
