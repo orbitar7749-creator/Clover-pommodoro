@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clover · Focus</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0a1f0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green-deep: #071507;
+      --green-dark: #0d2b0d;
+      --green-mid: #1a4d1a;
+      --green-bright: #2d7a2d;
+      --green-glow: #4aaa4a;
+      --green-light: #7dd87d;
+      --white: #f0fff0;
+      --white-dim: rgba(240,255,240,0.75);
+      --glass: rgba(7, 21, 7, 0.55);
+      --glass-border: rgba(77, 170, 77, 0.25);
+      --glass-border-hover: rgba(77, 170, 77, 0.55);
+      --radius: 20px;
+      --radius-sm: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--green-deep);
+      color: var(--white);
+      min-height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── Background Video ── */
+    #bg-video {
+      position: fixed;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0.55;
+    }
+
+    .bg-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(7,21,7,0.6) 0%, rgba(10,31,10,0.4) 100%);
+      z-index: 1;
+    }
+
+    /* ── Layout ── */
+    #app {
+      position: relative;
+      z-index: 2;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Clock (bottom-left) ── */
+    #clock-widget {
+      position: fixed;
+      bottom: 32px;
+      left: 32px;
+      z-index: 10;
+    }
+    #clock-time {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1;
+      text-shadow: 0 0 20px rgba(74,170,74,0.5);
+    }
+    #clock-date {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--green-light);
+      margin-top: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Music Button (top-right corner) ── */
+    #music-btn {
+      position: fixed;
+      top: 28px;
+      right: 28px;
+      z-index: 10;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--glass-border);
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s ease;
+      color: var(--green-light);
+    }
+    #music-btn:hover {
+      border-color: var(--glass-border-hover);
+      box-shadow: 0 0 16px rgba(74,170,74,0.3);
+      transform: scale(1.08);
+    }
+    #music-btn svg { width: 22px; height: 22px; }
+    #music-btn.playing { color: var(--green-glow); animation: pulse-ring 2s infinite; }
+    @keyframes pulse-ring {
+      0%,100% { box-shadow: 0 0 0 0 rgba(74,170,74,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(74,170,74,0); }
+    }
+
+    /* ── Main Card ── */
+    #main-card {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1.5px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 36px 44px 32px;
+      width: min(520px, 92vw);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(125,216,125,0.08);
+      position: relative;
+    }
+
+    /* ── Mode Pyramid (top-right of card) ── */
+    #mode-pyramid {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .pyramid-row { display: flex; gap: 6px; }
+    .mode-btn {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1.5px solid var(--glass-border);
+      background: transparent;
+      color: var(--white-dim);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .mode-btn:hover { border-color: var(--green-glow); color: var(--white); }
+    .mode-btn.active {
+      background: rgba(74,170,74,0.2);
+      border-color: var(--green-glow);
+      color: var(--white);
+      box-shadow: 0 0 10px rgba(74,170,74,0.2);
+    }
+
+    /* ── Mode Label ── */
+    #mode-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--green-light);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      min-height: 1em;
+      align-self: flex-start;
+      margin-top: 8px;
+    }
+
+    /* ── Timer Display ── */
+    #timer-display {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      cursor: pointer;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      transition: background 0.2s;
+      margin-bottom: 6px;
+    }
+    #timer-display:hover { background: rgba(74,170,74,0.07); }
+    .time-hm {
+      font-size: clamp(3.2rem, 9vw, 5rem);
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      text-shadow: 0 0 30px rgba(74,170,74,0.3);
+    }
+    .time-sep {
+      font-size: clamp(3.2rem, 9vw, 5rem);
+      font-weight: 900;
+      color: var(--green-glow);
+      line-height: 1;
+    }
+    .time-sec {
+      font-size: clamp(2rem, 5.5vw, 3rem);
+      font-weight: 800;
+      color: var(--green-light);
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    /* ── Status Text ── */
+    #status-text {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: var(--green-glow);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      min-height: 1.2em;
+    }
+
+    /* ── Cycle dots ── */
+    #cycle-dots {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      min-height: 10px;
+    }
+    .cycle-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green-mid);
+      border: 1.5px solid var(--green-bright);
+      transition: all 0.3s ease;
+    }
+    .cycle-dot.done { background: var(--green-glow); box-shadow: 0 0 6px rgba(74,170,74,0.5); }
+    .cycle-dot.active { background: var(--green-light); transform: scale(1.3); box-shadow: 0 0 10px rgba(125,216,125,0.6); }
+
+    /* ── Control Buttons ── */
+    #controls {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    .ctrl-btn {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      padding: 10px 22px;
+      border-radius: 50px;
+      border: 1.5px solid var(--glass-border);
+      background: rgba(13,43,13,0.6);
+      color: var(--white-dim);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .ctrl-btn:hover { border-color: var(--green-glow); color: var(--white); transform: translateY(-1px); }
+    .ctrl-btn.primary {
+      background: rgba(74,170,74,0.2);
+      border-color: var(--green-glow);
+      color: var(--white);
+      padding: 10px 32px;
+    }
+    .ctrl-btn.primary:hover { background: rgba(74,170,74,0.35); box-shadow: 0 0 18px rgba(74,170,74,0.3); }
+    .ctrl-btn.hidden { display: none; }
+
+    /* ── Music Panel ── */
+    #music-panel {
+      position: fixed;
+      top: 80px;
+      right: 28px;
+      z-index: 20;
+      width: 300px;
+      background: rgba(7,21,7,0.92);
+      backdrop-filter: blur(24px);
+      border: 1.5px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      animation: slide-in 0.25s ease;
+    }
+    #music-panel.open { display: flex; }
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #music-panel h3 {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      color: var(--green-light);
+      text-transform: uppercase;
+    }
+    #now-playing {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--white-dim);
+      padding: 8px 12px;
+      background: rgba(74,170,74,0.08);
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #now-playing .np-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green-glow);
+      flex-shrink: 0;
+      animation: blink 1.2s infinite;
+    }
+    #now-playing .np-dot.off { background: var(--green-mid); animation: none; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    #music-upload-btn {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1.5px dashed var(--glass-border);
+      background: transparent;
+      color: var(--green-light);
+      cursor: pointer;
+      transition: all 0.25s;
+      text-align: center;
+    }
+    #music-upload-btn:hover { border-color: var(--green-glow); color: var(--white); }
+    #music-file-input { display: none; }
+
+    #song-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    #song-list::-webkit-scrollbar { width: 4px; }
+    #song-list::-webkit-scrollbar-track { background: transparent; }
+    #song-list::-webkit-scrollbar-thumb { background: var(--green-mid); border-radius: 2px; }
+
+    .song-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--white-dim);
+    }
+    .song-item:hover { background: rgba(74,170,74,0.1); border-color: var(--glass-border); }
+    .song-item.playing { background: rgba(74,170,74,0.15); border-color: var(--green-glow); color: var(--white); }
+    .song-item .song-icon { font-size: 0.9rem; flex-shrink: 0; }
+    .song-item .song-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .song-item .song-del {
+      opacity: 0; font-size: 0.7rem; color: var(--green-bright);
+      padding: 2px 5px; border-radius: 4px;
+      transition: opacity 0.2s;
+    }
+    .song-item:hover .song-del { opacity: 1; }
+
+    #music-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .music-ctrl {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 7px 18px;
+      border-radius: 50px;
+      border: 1.5px solid var(--glass-border);
+      background: rgba(13,43,13,0.6);
+      color: var(--white-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .music-ctrl:hover { border-color: var(--green-glow); color: var(--white); }
+
+    /* ── Modal Overlay ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fade-in 0.2s ease;
+    }
+    @keyframes fade-in { from{opacity:0} to{opacity:1} }
+
+    .modal {
+      background: rgba(7,21,7,0.95);
+      border: 1.5px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 32px;
+      width: min(420px, 90vw);
+      box-shadow: 0 16px 64px rgba(0,0,0,0.7), inset 0 1px 0 rgba(125,216,125,0.06);
+      animation: modal-in 0.25s ease;
+    }
+    @keyframes modal-in {
+      from { opacity:0; transform: scale(0.93) translateY(10px); }
+      to { opacity:1; transform: scale(1) translateY(0); }
+    }
+    .modal h2 {
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      color: var(--green-light);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .modal-section {
+      margin-bottom: 18px;
+    }
+    .modal-section label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--green-glow);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .modal-input {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--glass-border);
+      background: rgba(13,43,13,0.7);
+      color: var(--white);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .modal-input:focus { border-color: var(--green-glow); }
+    .modal-input::placeholder { color: rgba(240,255,240,0.3); }
+    .modal-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+    .btn-cancel {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem; font-weight: 800;
+      padding: 9px 20px;
+      border-radius: 50px;
+      border: 1.5px solid var(--glass-border);
+      background: transparent;
+      color: var(--white-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-cancel:hover { border-color: var(--green-bright); color: var(--white); }
+    .btn-confirm {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.8rem; font-weight: 800;
+      padding: 9px 24px;
+      border-radius: 50px;
+      border: 1.5px solid var(--green-glow);
+      background: rgba(74,170,74,0.22);
+      color: var(--white);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-confirm:hover { background: rgba(74,170,74,0.38); box-shadow: 0 0 16px rgba(74,170,74,0.25); }
+
+    /* ── Notification Toast ── */
+    #toast {
+      position: fixed;
+      top: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: rgba(7,21,7,0.95);
+      border: 1.5px solid var(--green-glow);
+      border-radius: 50px;
+      padding: 10px 24px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--green-light);
+      z-index: 50;
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 4px 24px rgba(74,170,74,0.3);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Lap list (stopwatch) ── */
+    #lap-list {
+      margin-top: 12px;
+      max-height: 100px;
+      overflow-y: auto;
+      width: 100%;
+      display: none;
+    }
+    #lap-list.visible { display: block; }
+    #lap-list::-webkit-scrollbar { width: 3px; }
+    #lap-list::-webkit-scrollbar-thumb { background: var(--green-mid); }
+    .lap-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--white-dim);
+      border-bottom: 1px solid rgba(74,170,74,0.08);
+    }
+    .lap-item span:last-child { color: var(--green-light); }
+
+    /* ── Scrollbar global ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--green-mid); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- Background -->
+<video id="bg-video" autoplay muted loop playsinline>
+  <source src="endlessrain.mp4" type="video/mp4" />
+</video>
+<div class="bg-overlay"></div>
+
+<!-- Hidden audio element -->
+<audio id="music-audio" loop></audio>
+
+<!-- Clock -->
+<div id="clock-widget">
+  <div id="clock-time">12:00 AM</div>
+  <div id="clock-date">Monday, 27 Apr</div>
+</div>
+
+<!-- Music Button -->
+<button id="music-btn" title="Music Player">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+</button>
+
+<!-- Music Panel -->
+<div id="music-panel">
+  <h3>🎵 Music Player</h3>
+  <div id="now-playing">
+    <div class="np-dot off" id="np-dot"></div>
+    <span id="np-label">No song playing</span>
+  </div>
+  <button id="music-upload-btn">＋ Add Songs</button>
+  <input type="file" id="music-file-input" accept="audio/*" multiple />
+  <div id="song-list"></div>
+  <div id="music-controls">
+    <button class="music-ctrl" id="music-play-btn">▶ Play</button>
+    <button class="music-ctrl" id="music-prev-btn">◀ Prev</button>
+    <button class="music-ctrl" id="music-next-btn">Next ▶</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app">
+  <div id="main-card">
+
+    <!-- Mode Pyramid -->
+    <div id="mode-pyramid">
+      <div class="pyramid-row">
+        <button class="mode-btn active" data-mode="pomodoro">Pomodoro</button>
+      </div>
+      <div class="pyramid-row">
+        <button class="mode-btn" data-mode="stopwatch">Stopwatch</button>
+        <button class="mode-btn" data-mode="timer">Timer</button>
+      </div>
+    </div>
+
+    <!-- Mode Label -->
+    <div id="mode-label">Focus</div>
+
+    <!-- Timer Display -->
+    <div id="timer-display">
+      <span class="time-hm" id="t-mm">00</span>
+      <span class="time-sep">:</span>
+      <span class="time-hm" id="t-ss-main">00</span>
+      <span class="time-sep" id="t-sep2" style="font-size:clamp(2rem,5.5vw,3rem);color:var(--green-light)">:</span>
+      <span class="time-sec" id="t-cs">00</span>
+    </div>
+
+    <!-- Status -->
+    <div id="status-text">READY</div>
+
+    <!-- Cycle Dots -->
+    <div id="cycle-dots"></div>
+
+    <!-- Controls -->
+    <div id="controls">
+      <button class="ctrl-btn" id="btn-reset" style="display:none">Reset</button>
+      <button class="ctrl-btn primary" id="btn-start">Start</button>
+      <button class="ctrl-btn" id="btn-lap" style="display:none">Lap</button>
+    </div>
+
+    <!-- Lap List -->
+    <div id="lap-list"></div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Modals -->
+<div id="modal-container"></div>
+
+<script>
+// ── State ──
+let mode = 'pomodoro';
+let running = false;
+let intervalId = null;
+
+// Pomodoro
+let pomCfg = { activity: 'Work', workMin: 25, breakMin: 5, cycles: 4 };
+let pomState = { phase: 'work', cyclesDone: 0, totalCycles: 4, secsLeft: 25*60 };
+
+// Stopwatch
+let swElapsed = 0; // ms
+let swStart = null;
+let laps = [];
+
+// Timer
+let timerCfg = { h: 0, m: 25, s: 0 };
+let timerSecsLeft = 25*60;
+
+// Music
+let songs = []; // {name, url, blob}
+let currentSongIdx = -1;
+let musicPlaying = false;
+const audio = document.getElementById('music-audio');
+
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours(), m = now.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  const mStr = String(m).padStart(2,'0');
+  document.getElementById('clock-time').textContent = `${h}:${mStr} ${ampm}`;
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clock-date').textContent =
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── Display ──
+function pad(n){ return String(Math.floor(n)).padStart(2,'0'); }
+
+function renderDisplay(mm, ss, cs, showCs=true) {
+  document.getElementById('t-mm').textContent = pad(mm);
+  document.getElementById('t-ss-main').textContent = pad(ss);
+  document.getElementById('t-cs').textContent = pad(cs);
+  document.getElementById('t-sep2').style.display = showCs ? '' : 'none';
+  document.getElementById('t-cs').style.display = showCs ? '' : 'none';
+}
+
+function renderPomodoro() {
+  const s = pomState.secsLeft;
+  renderDisplay(Math.floor(s/60), s%60, 0, false);
+}
+
+function renderStopwatch() {
+  const total = swElapsed + (swStart ? Date.now() - swStart : 0);
+  const ms = total % 1000;
+  const secs = Math.floor(total/1000);
+  renderDisplay(Math.floor(secs/60), secs%60, Math.floor(ms/10), true);
+}
+
+function renderTimer() {
+  const s = timerSecsLeft;
+  renderDisplay(Math.floor(s/60), s%60, 0, false);
+}
+
+function setStatus(txt) { document.getElementById('status-text').textContent = txt; }
+function setLabel(txt) { document.getElementById('mode-label').textContent = txt; }
+
+// ── Cycle Dots ──
+function renderDots() {
+  const el = document.getElementById('cycle-dots');
+  if (mode !== 'pomodoro') { el.innerHTML=''; return; }
+  el.innerHTML = '';
+  for(let i=0; i<pomCfg.cycles; i++){
+    const d = document.createElement('div');
+    d.className = 'cycle-dot';
+    if(i < pomState.cyclesDone) d.classList.add('done');
+    else if(i === pomState.cyclesDone && pomState.phase==='work') d.classList.add('active');
+    el.appendChild(d);
+  }
+}
+
+// ── Mode Switching ──
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(running) return;
+    mode = btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    resetAll();
+    updateModeUI();
+  });
+});
+
+function updateModeUI() {
+  const lapBtn = document.getElementById('btn-lap');
+  if(mode==='stopwatch'){
+    setLabel('Stopwatch'); setStatus('READY');
+    renderDisplay(0,0,0,true);
+    lapBtn.style.display='';
+  } else if(mode==='timer'){
+    setLabel('Timer'); setStatus('READY');
+    timerSecsLeft = timerCfg.h*3600+timerCfg.m*60+timerCfg.s;
+    renderTimer();
+    lapBtn.style.display='none';
+  } else {
+    setLabel(pomCfg.activity); setStatus('READY');
+    pomState = { phase:'work', cyclesDone:0, totalCycles:pomCfg.cycles, secsLeft:pomCfg.workMin*60 };
+    renderPomodoro();
+    lapBtn.style.display='none';
+  }
+  renderDots();
+  document.getElementById('lap-list').classList.remove('visible');
+  document.getElementById('lap-list').innerHTML='';
+}
+
+// ── Start/Pause ──
+document.getElementById('btn-start').addEventListener('click', () => {
+  if(mode==='pomodoro') togglePomodoro();
+  else if(mode==='stopwatch') toggleStopwatch();
+  else toggleTimer();
+});
+
+function setStartBtn(state){ // 'start','pause','resume'
+  const btn = document.getElementById('btn-start');
+  btn.textContent = state==='pause' ? 'Pause' : state==='resume' ? 'Resume' : 'Start';
+  document.getElementById('btn-reset').style.display = state!=='start' ? '' : 'none';
+}
+
+// ── Pomodoro ──
+function togglePomodoro(){
+  if(!running){
+    running=true;
+    setStartBtn('pause');
+    intervalId = setInterval(tickPomodoro,1000);
+  } else {
+    running=false;
+    clearInterval(intervalId);
+    setStartBtn('resume');
+    setStatus('PAUSED');
+  }
+}
+
+function tickPomodoro(){
+  pomState.secsLeft--;
+  renderPomodoro();
+  if(pomState.secsLeft <= 0) {
+    if(pomState.phase==='work'){
+      pomState.phase='break';
+      pomState.secsLeft=pomCfg.breakMin*60;
+      chime(); notify('☕ Break time!');
+      setStatus('BREAK');
+      setLabel('Break');
+    } else {
+      pomState.cyclesDone++;
+      renderDots();
+      if(pomState.cyclesDone >= pomCfg.cycles){
+        // Done!
+        running=false; clearInterval(intervalId);
+        setStatus('ALL DONE 🎉'); setStartBtn('start');
+        chime(); chime(); notify('🎉 All cycles complete!');
+        setLabel(pomCfg.activity);
+        return;
+      }
+      pomState.phase='work';
+      pomState.secsLeft=pomCfg.workMin*60;
+      chime(); notify(`🌿 ${pomCfg.activity} time!`);
+      setStatus(pomCfg.activity.toUpperCase());
+      setLabel(pomCfg.activity);
+    }
+    renderDots();
+  } else {
+    if(pomState.phase==='work') setStatus(pomCfg.activity.toUpperCase());
+    else setStatus('BREAK');
+  }
+}
+
+// ── Stopwatch ──
+function toggleStopwatch(){
+  if(!running){
+    running=true; swStart=Date.now();
+    setStartBtn('pause');
+    setStatus('RUNNING');
+    intervalId=setInterval(renderStopwatch,50);
+  } else {
+    running=false;
+    swElapsed += Date.now()-swStart; swStart=null;
+    clearInterval(intervalId);
+    setStartBtn('resume');
+    setStatus('PAUSED');
+  }
+}
+
+document.getElementById('btn-lap').addEventListener('click',()=>{
+  if(!running && swElapsed===0) return;
+  const total = swElapsed+(swStart?Date.now()-swStart:0);
+  const ms=total%1000, secs=Math.floor(total/1000);
+  const t=`${pad(Math.floor(secs/60))}:${pad(secs%60)}.${pad(Math.floor(ms/10))}`;
+  laps.push(t);
+  const el=document.getElementById('lap-list');
+  el.classList.add('visible');
+  const div=document.createElement('div'); div.className='lap-item';
+  div.innerHTML=`<span>Lap ${laps.length}</span><span>${t}</span>`;
+  el.prepend(div);
+});
+
+// ── Timer ──
+function toggleTimer(){
+  if(timerSecsLeft<=0 && !running) {
+    timerSecsLeft=timerCfg.h*3600+timerCfg.m*60+timerCfg.s;
+    renderTimer();
+  }
+  if(!running){
+    running=true;
+    setStartBtn('pause'); setStatus('RUNNING');
+    intervalId=setInterval(tickTimer,1000);
+  } else {
+    running=false; clearInterval(intervalId);
+    setStartBtn('resume'); setStatus('PAUSED');
+  }
+}
+
+function tickTimer(){
+  timerSecsLeft--;
+  renderTimer();
+  if(timerSecsLeft<=0){
+    running=false; clearInterval(intervalId);
+    setStatus('DONE 🎉'); setStartBtn('start');
+    chime(); notify('⏰ Timer done!');
+  }
+}
+
+// ── Reset ──
+document.getElementById('btn-reset').addEventListener('click', resetAll);
+function resetAll(){
+  running=false; clearInterval(intervalId);
+  setStartBtn('start');
+  if(mode==='pomodoro'){
+    pomState={phase:'work',cyclesDone:0,totalCycles:pomCfg.cycles,secsLeft:pomCfg.workMin*60};
+    renderPomodoro(); setStatus('READY'); setLabel(pomCfg.activity);
+  } else if(mode==='stopwatch'){
+    swElapsed=0; swStart=null; laps=[];
+    renderDisplay(0,0,0,true); setStatus('READY');
+    document.getElementById('lap-list').classList.remove('visible');
+    document.getElementById('lap-list').innerHTML='';
+  } else {
+    timerSecsLeft=timerCfg.h*3600+timerCfg.m*60+timerCfg.s;
+    renderTimer(); setStatus('READY');
+  }
+  renderDots();
+}
+
+// ── Click display to configure ──
+document.getElementById('timer-display').addEventListener('click', () => {
+  if(running) return;
+  if(mode==='pomodoro') showPomodoroModal();
+  else if(mode==='stopwatch') showStopwatchModal();
+  else showTimerModal();
+});
+
+// ── Modals ──
+function showModal(html, onConfirm) {
+  const mc = document.getElementById('modal-container');
+  mc.innerHTML = `<div class="modal-overlay"><div class="modal">${html}</div></div>`;
+  mc.querySelector('.btn-confirm').addEventListener('click', () => { onConfirm(); mc.innerHTML=''; });
+  mc.querySelector('.btn-cancel').addEventListener('click', () => { mc.innerHTML=''; });
+  mc.querySelector('.modal-overlay').addEventListener('click', e => { if(e.target===mc.querySelector('.modal-overlay')) mc.innerHTML=''; });
+}
+
+function showPomodoroModal(){
+  showModal(`
+    <h2>🍀 Pomodoro Settings</h2>
+    <div class="modal-section">
+      <label>Activity Name</label>
+      <input class="modal-input" id="m-activity" placeholder="e.g. Study, Work, Recall…" value="${pomCfg.activity}" />
+    </div>
+    <div class="modal-section">
+      <label>Durations (minutes)</label>
+      <div class="modal-row">
+        <div>
+          <label style="font-size:0.65rem">Work</label>
+          <input class="modal-input" id="m-work" type="number" min="1" max="120" value="${pomCfg.workMin}" />
+        </div>
+        <div>
+          <label style="font-size:0.65rem">Break</label>
+          <input class="modal-input" id="m-break" type="number" min="1" max="60" value="${pomCfg.breakMin}" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <label>Number of Cycles</label>
+      <input class="modal-input" id="m-cycles" type="number" min="1" max="20" value="${pomCfg.cycles}" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel">Cancel</button>
+      <button class="btn-confirm">Apply</button>
+    </div>
+  `, () => {
+    const act = document.getElementById('m-activity').value.trim() || 'Work';
+    const wm = parseInt(document.getElementById('m-work').value)||25;
+    const bm = parseInt(document.getElementById('m-break').value)||5;
+    const cy = parseInt(document.getElementById('m-cycles').value)||4;
+    pomCfg = { activity:act, workMin:wm, breakMin:bm, cycles:cy };
+    pomState = { phase:'work', cyclesDone:0, totalCycles:cy, secsLeft:wm*60 };
+    setLabel(act); renderPomodoro(); renderDots(); setStatus('READY');
+  });
+}
+
+function showStopwatchModal(){
+  showModal(`
+    <h2>⏱ Stopwatch</h2>
+    <div class="modal-section" style="color:var(--white-dim);font-size:0.85rem;line-height:1.7">
+      <p>Tap <b style="color:var(--green-light)">Start</b> to begin timing.</p>
+      <p>Tap <b style="color:var(--green-light)">Lap</b> to record split times.</p>
+      <p>Tap <b style="color:var(--green-light)">Reset</b> to clear everything.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel">Close</button>
+      <button class="btn-confirm">Got it</button>
+    </div>
+  `, ()=>{});
+}
+
+function showTimerModal(){
+  showModal(`
+    <h2>⏰ Timer Settings</h2>
+    <div class="modal-section">
+      <label>Set Duration</label>
+      <div class="modal-row" style="grid-template-columns:1fr 1fr 1fr">
+        <div>
+          <label style="font-size:0.65rem">Hours</label>
+          <input class="modal-input" id="m-h" type="number" min="0" max="23" value="${timerCfg.h}" />
+        </div>
+        <div>
+          <label style="font-size:0.65rem">Minutes</label>
+          <input class="modal-input" id="m-m" type="number" min="0" max="59" value="${timerCfg.m}" />
+        </div>
+        <div>
+          <label style="font-size:0.65rem">Seconds</label>
+          <input class="modal-input" id="m-s" type="number" min="0" max="59" value="${timerCfg.s}" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel">Cancel</button>
+      <button class="btn-confirm">Apply</button>
+    </div>
+  `, ()=>{
+    timerCfg.h=parseInt(document.getElementById('m-h').value)||0;
+    timerCfg.m=parseInt(document.getElementById('m-m').value)||25;
+    timerCfg.s=parseInt(document.getElementById('m-s').value)||0;
+    timerSecsLeft=timerCfg.h*3600+timerCfg.m*60+timerCfg.s;
+    renderTimer(); setStatus('READY');
+  });
+}
+
+// ── Chime (Web Audio) ──
+let audioCtx = null;
+function chime(){
+  try {
+    if(!audioCtx) audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    const notes=[523,659,784];
+    notes.forEach((freq,i)=>{
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type='sine'; osc.frequency.value=freq;
+      const t=audioCtx.currentTime+i*0.18;
+      gain.gain.setValueAtTime(0,t);
+      gain.gain.linearRampToValueAtTime(0.18,t+0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+      osc.start(t); osc.stop(t+0.6);
+    });
+  } catch(e){}
+}
+
+// ── Toast Notification ──
+let toastTimer=null;
+function notify(msg){
+  if(Notification.permission==='granted'){
+    new Notification('🍀 Clover Focus',{body:msg,icon:'icon-192.png'});
+  }
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+// Request notification permission
+if(Notification.permission==='default') Notification.requestPermission();
+
+// ── Music ──
+document.getElementById('music-btn').addEventListener('click', ()=>{
+  document.getElementById('music-panel').classList.toggle('open');
+});
+
+document.getElementById('music-upload-btn').addEventListener('click',()=>{
+  document.getElementById('music-file-input').click();
+});
+
+document.getElementById('music-file-input').addEventListener('change', e=>{
+  Array.from(e.target.files).forEach(file=>{
+    const url=URL.createObjectURL(file);
+    songs.push({name:file.name.replace(/\.[^.]+$/,''), url});
+    renderSongList();
+  });
+  e.target.value='';
+});
+
+function renderSongList(){
+  const el=document.getElementById('song-list');
+  el.innerHTML='';
+  songs.forEach((s,i)=>{
+    const div=document.createElement('div');
+    div.className='song-item'+(i===currentSongIdx?' playing':'');
+    div.innerHTML=`<span class="song-icon">${i===currentSongIdx&&musicPlaying?'▶':'🎵'}</span>
+      <span class="song-name">${s.name}</span>
+      <span class="song-del" data-idx="${i}">✕</span>`;
+    div.addEventListener('click', e=>{
+      if(e.target.dataset.idx!==undefined){ deleteSong(parseInt(e.target.dataset.idx)); return; }
+      playSong(i);
+    });
+    el.appendChild(div);
+  });
+}
+
+function playSong(idx){
+  currentSongIdx=idx;
+  audio.src=songs[idx].url;
+  audio.play();
+  musicPlaying=true;
+  updateNowPlaying();
+  renderSongList();
+  document.getElementById('music-btn').classList.add('playing');
+  document.getElementById('music-play-btn').textContent='⏸ Pause';
+}
+
+function deleteSong(idx){
+  URL.revokeObjectURL(songs[idx].url);
+  songs.splice(idx,1);
+  if(currentSongIdx===idx){ audio.pause(); musicPlaying=false; currentSongIdx=-1; updateNowPlaying(); }
+  else if(currentSongIdx>idx) currentSongIdx--;
+  renderSongList();
+}
+
+function updateNowPlaying(){
+  const dot=document.getElementById('np-dot');
+  const lbl=document.getElementById('np-label');
+  if(currentSongIdx>=0 && musicPlaying){
+    dot.classList.remove('off');
+    lbl.textContent=songs[currentSongIdx].name;
+  } else {
+    dot.classList.add('off');
+    lbl.textContent=currentSongIdx>=0?songs[currentSongIdx].name:'No song playing';
+  }
+}
+
+document.getElementById('music-play-btn').addEventListener('click',()=>{
+  if(songs.length===0) return;
+  if(musicPlaying){ audio.pause(); musicPlaying=false; document.getElementById('music-play-btn').textContent='▶ Play'; document.getElementById('music-btn').classList.remove('playing'); }
+  else {
+    if(currentSongIdx<0) currentSongIdx=0;
+    audio.src=songs[currentSongIdx].url;
+    audio.play(); musicPlaying=true;
+    document.getElementById('music-play-btn').textContent='⏸ Pause';
+    document.getElementById('music-btn').classList.add('playing');
+  }
+  updateNowPlaying(); renderSongList();
+});
+
+document.getElementById('music-prev-btn').addEventListener('click',()=>{
+  if(songs.length===0) return;
+  const idx=(currentSongIdx-1+songs.length)%songs.length;
+  playSong(idx);
+});
+
+document.getElementById('music-next-btn').addEventListener('click',()=>{
+  if(songs.length===0) return;
+  const idx=(currentSongIdx+1)%songs.length;
+  playSong(idx);
+});
+
+audio.addEventListener('ended',()=>{ // loop to next
+  if(songs.length>1){ const idx=(currentSongIdx+1)%songs.length; playSong(idx); }
+});
+
+// Click outside music panel to close
+document.addEventListener('click', e=>{
+  const panel=document.getElementById('music-panel');
+  const btn=document.getElementById('music-btn');
+  if(!panel.contains(e.target)&&!btn.contains(e.target)) panel.classList.remove('open');
+});
+
+// ── Init ──
+updateModeUI();
+
+// ── Service Worker (PWA) ──
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
