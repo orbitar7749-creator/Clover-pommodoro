@@ -1132,6 +1132,11 @@ audio.addEventListener('ended',()=>{ // loop to next
 });
 
 // Click outside music panel to close
+document.addEventListener('touchend', e=>{
+  const panel=document.getElementById('music-panel');
+  const btn=document.getElementById('music-btn');
+  if(!panel.contains(e.target)&&!btn.contains(e.target)) panel.classList.remove('open');
+});
 document.addEventListener('click', e=>{
   const panel=document.getElementById('music-panel');
   const btn=document.getElementById('music-btn');
