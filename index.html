@@ -98,6 +98,7 @@
       bottom: 28px;
       right: 28px;
       z-index: 9999;
+      -webkit-tap-highlight-color: transparent;
       width: 48px; height: 48px;
       border-radius: 50%;
       border: 2px solid var(--glass-border);
@@ -1037,9 +1038,17 @@ function notify(msg){
 if(Notification.permission==='default') Notification.requestPermission();
 
 // ── Music ──
-document.getElementById('music-btn').addEventListener('click', ()=>{
-  document.getElementById('music-panel').classList.toggle('open');
-});
+const musicBtn = document.getElementById('music-btn');
+const musicPanel = document.getElementById('music-panel');
+
+function toggleMusicPanel(e){
+  e.preventDefault();
+  e.stopPropagation();
+  musicPanel.classList.toggle('open');
+}
+
+musicBtn.addEventListener('click', toggleMusicPanel);
+musicBtn.addEventListener('touchstart', toggleMusicPanel, {passive: false});
 
 document.getElementById('music-upload-btn').addEventListener('click',()=>{
   document.getElementById('music-file-input').click();
